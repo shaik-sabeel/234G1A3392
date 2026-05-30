@@ -1,58 +1,34 @@
-/**
- * Priority Weight Mapping for Notification Types
- * Placement > Result > Event
- */
+// Weights for notification types
 const TYPE_WEIGHTS = {
   placement: 3,
   result: 2,
   event: 1
 };
 
-/**
- * Extracts and parses the timestamp from a notification.
- * Safe fallback if timestamp is missing or malformed.
- * 
- * @param {Object} notification 
- * @returns {number} Unix timestamp in ms
- */
+// Helper to parse date to timestamp ms safely
 function getTimestampMs(notification) {
   if (!notification.Timestamp) return 0;
-  // Replace space with 'T' for ISO 8601 compatibility
   const isoString = notification.Timestamp.replace(' ', 'T');
   const parsed = Date.parse(isoString);
   return isNaN(parsed) ? 0 : parsed;
 }
 
-/**
- * Compares two notifications for priority.
- * Returns negative if a has LOWER priority than b,
- * positive if a has HIGHER priority than b,
- * and 0 if they are equal.
- * 
- * @param {Object} a 
- * @param {Object} b 
- * @returns {number}
- */
+// Custom comparator: negative if a has lower priority than b
 function compareNotifications(a, b) {
   const weightA = TYPE_WEIGHTS[a.Type?.toLowerCase()] || 0;
   const weightB = TYPE_WEIGHTS[b.Type?.toLowerCase()] || 0;
 
-  // 1. Compare Weights
   if (weightA !== weightB) {
     return weightA - weightB;
   }
 
-  // 2. Compare Recency (Timestamps)
   const timeA = getTimestampMs(a);
   const timeB = getTimestampMs(b);
 
   return timeA - timeB;
 }
 
-/**
- * Min-Heap implementation to maintain the top 'N' highest priority items.
- * Keeps the "smallest" (lowest priority) element at the root (index 0).
- */
+// MinHeap for holding top N items efficiently
 class MinHeap {
   constructor(maxSize) {
     this.heap = [];
@@ -72,15 +48,13 @@ class MinHeap {
       this.heap.push(item);
       this._bubbleUp(this.size() - 1);
     } else if (compareNotifications(item, this.peek()) > 0) {
-      // New item has HIGHER priority than the lowest priority item in our top N.
-      // Replace the root and heapify down.
       this.heap[0] = item;
       this._bubbleDown(0);
     }
   }
 
   getSortedList() {
-    // Return the items sorted in descending order of priority (highest priority first)
+    // return highest priority first
     return [...this.heap].sort((a, b) => compareNotifications(b, a));
   }
 
@@ -88,7 +62,6 @@ class MinHeap {
     while (index > 0) {
       const parentIndex = Math.floor((index - 1) / 2);
       if (compareNotifications(this.heap[index], this.heap[parentIndex]) < 0) {
-        // Child has lower priority than parent, swap to keep min-heap property
         this._swap(index, parentIndex);
         index = parentIndex;
       } else {
@@ -128,14 +101,7 @@ class MinHeap {
   }
 }
 
-/**
- * Filter and sort a collection of notifications to find the top N.
- * 
- * @param {Array<Object>} notifications - Array of raw notification objects
- * @param {number} n - Number of priority notifications to return (default 10)
- * @param {Array<string>} [readIds] - Optional list of notification IDs that are already read
- * @returns {Array<Object>} The sorted top N notifications
- */
+// Filter read items and retrieve top N priority notifications
 function getPriorityNotifications(notifications, n = 10, readIds = []) {
   if (!Array.isArray(notifications)) return [];
 
@@ -143,7 +109,6 @@ function getPriorityNotifications(notifications, n = 10, readIds = []) {
   const readSet = new Set(readIds);
 
   for (const notif of notifications) {
-    // Filter out read notifications if any
     if (readSet.has(notif.ID)) {
       continue;
     }
