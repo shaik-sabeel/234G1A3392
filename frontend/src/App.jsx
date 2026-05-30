@@ -116,14 +116,14 @@ function Layout({ children, profile }) {
         <Container maxWidth="lg">
           <Grid container spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <Grid item="true" xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary" align="left">
+              {/* <Typography variant="body2" color="text.secondary" align="left">
                 © 2026 Sumathi Reddy Institute of Technology. All rights reserved.
-              </Typography>
+              </Typography> */}
             </Grid>
             <Grid item="true" xs={12} sm={6} sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
-              <Typography variant="caption" color="text.secondary">
+              {/* <Typography variant="caption" color="text.secondary">
                 SRIT Portal (MUI Stack)
-              </Typography>
+              </Typography> */}
             </Grid>
           </Grid>
         </Container>
