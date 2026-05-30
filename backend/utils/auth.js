@@ -6,7 +6,6 @@ dotenv.config();
 let cachedToken = null;
 let tokenExpiry = null;
 
-// Get access token with in-memory caching
 async function getAccessToken() {
   const now = Date.now();
   

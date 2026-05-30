@@ -1,39 +1,540 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  Briefcase, 
-  GraduationCap, 
-  Calendar, 
-  RefreshCw, 
-  Sliders, 
-  CheckCircle, 
-  AlertTriangle, 
-  Sparkles,
-  Info,
-  User,
-  Clock,
-  LogOut,
-  Bell
-} from 'lucide-react';
+
+import {
+  Container,
+  Box,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Slider,
+  Pagination,
+  CircularProgress,
+  Alert,
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Tabs,
+  Tab,
+  IconButton
+} from '@mui/material';
+
+import WorkIcon from '@mui/icons-material/Work';
+import SchoolIcon from '@mui/icons-material/School';
+import EventIcon from '@mui/icons-material/Event';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import FiberNewIcon from '@mui/icons-material/FiberNew';
+import PersonIcon from '@mui/icons-material/Person';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import DoneIcon from '@mui/icons-material/Done';
+import TuneIcon from '@mui/icons-material/Tune';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import InfoIcon from '@mui/icons-material/Info';
 
 const API_BASE = 'http://localhost:5000/api';
 
-function App() {
+function Layout({ children, profile }) {
+  const location = useLocation();
+  const currentTab = location.pathname === '/all' ? 1 : 0;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <AppBar position="sticky">
+        <Container maxWidth="lg">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <NotificationsIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  Notify Hub
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Student Notification Portal
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                  <PersonIcon sx={{ fontSize: 18 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    {profile.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.light', fontMono: true }}>
+                    {profile.rollNo}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+        <Container maxWidth="lg">
+          <Tabs value={currentTab} indicatorColor="primary" textColor="primary">
+            <Tab 
+              label="Priority Inbox" 
+              icon={<DashboardIcon sx={{ fontSize: 18 }} />} 
+              iconPosition="start"
+              component={Link} 
+              to="/" 
+            />
+            <Tab 
+              label="All Notifications" 
+              icon={<ListAltIcon sx={{ fontSize: 18 }} />} 
+              iconPosition="start"
+              component={Link} 
+              to="/all" 
+            />
+          </Tabs>
+        </Container>
+      </Box>
+
+      <Container maxWidth="lg" sx={{ flexGrow: 1, py: 4 }}>
+        {children}
+      </Container>
+
+      <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Grid item="true" xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary" align="left">
+                © 2026 Sumathi Reddy Institute of Technology. All rights reserved.
+              </Typography>
+            </Grid>
+            <Grid item="true" xs={12} sm={6} sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+              <Typography variant="caption" color="text.secondary">
+                SRIT Portal (MUI Stack)
+              </Typography>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </Box>
+  );
+}
+
+function PriorityInboxView({ profile, viewedIds, onMarkViewed }) {
   const [notifications, setNotifications] = useState([]);
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const fetchPriority = useCallback(async (currentLimit) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE}/notifications`, {
+        params: { n: currentLimit }
+      });
+      if (response.data?.success) {
+        setNotifications(response.data.notifications || []);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || err.message || 'Failed to connect to backend server.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPriority(limit);
+  }, [limit, fetchPriority]);
+
+  return (
+    <Grid container spacing={4}>
+      <Grid item="true" xs={12} md={4}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', mb: 2, display: 'block' }}>
+                Profile Overview
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Avatar sx={{ bgcolor: 'secondary.main', width: 44, height: 44 }}>{profile.name[0]}</Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{profile.name}</Typography>
+                  <Typography variant="body2" color="primary.light" sx={{ fontFamily: 'monospace' }}>{profile.rollNo}</Typography>
+                </Box>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                {profile.email}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                  <TuneIcon fontSize="small" color="primary" /> Feed Settings
+                </Typography>
+                <Button 
+                  size="small" 
+                  startIcon={<RefreshIcon />} 
+                  onClick={() => fetchPriority(limit)}
+                  disabled={loading}
+                >
+                  Refresh
+                </Button>
+              </Box>
+              
+              <Box sx={{ px: 1, mt: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>
+                  DISPLAY CAPACITY (n = {limit})
+                </Typography>
+                <Slider
+                  min={3}
+                  max={30}
+                  value={limit}
+                  onChange={(e, val) => setLimit(val)}
+                  valueLabelDisplay="auto"
+                  color="primary"
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      </Grid>
+
+      <Grid item="true" xs={12} md={8}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+            Priority Notifications
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Showing top {notifications.length} updates
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        )}
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : notifications.length === 0 ? (
+          <Paper sx={{ p: 6, textAlign: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: 'divider', bgcolor: 'transparent' }}>
+            <Typography variant="body1" color="text.secondary">
+              No notifications in your priority inbox.
+            </Typography>
+          </Paper>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {notifications.map((notif) => {
+              const isViewed = viewedIds.includes(notif.ID);
+              return (
+                <NotificationCard 
+                  key={notif.ID} 
+                  notif={notif} 
+                  isViewed={isViewed} 
+                  onMarkViewed={onMarkViewed} 
+                />
+              );
+            })}
+          </Box>
+        )}
+      </Grid>
+    </Grid>
+  );
+}
+
+function AllNotificationsView({ viewedIds, onMarkViewed }) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
-  // Student Profile details loaded from backend
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [category, setCategory] = useState(''); 
+  const limit = 6; 
+
+  const fetchAll = useCallback(async (pageNum, catType) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: pageNum,
+        limit
+      };
+      if (catType) {
+        params.notification_type = catType;
+      }
+      
+      const response = await axios.get(`${API_BASE}/notifications/all`, { params });
+      if (response.data?.success) {
+        setNotifications(response.data.notifications || []);
+        const totalItems = response.data.total || 0;
+        setTotalPages(Math.ceil(totalItems / limit) || 1);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || err.message || 'Failed to connect to backend server.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAll(page, category);
+  }, [page, category, fetchAll]);
+
+  const handleCategoryChange = (newCat) => {
+    setCategory(newCat);
+    setPage(1); 
+  };
+
+  const handlePageChange = (e, val) => {
+    setPage(val);
+  };
+
+  return (
+    <Grid container spacing={4}>
+      <Grid item="true" xs={12} md={4}>
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                <TuneIcon fontSize="small" color="primary" /> Filter Categories
+              </Typography>
+              <IconButton size="small" onClick={() => fetchAll(page, category)} disabled={loading}>
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            <List component="nav" aria-label="notification categories">
+              <ListItem 
+                button 
+                selected={category === ''} 
+                onClick={() => handleCategoryChange('')}
+                sx={{ borderRadius: 1.5, mb: 0.5 }}
+              >
+                <ListItemText primary="Show All Updates" />
+              </ListItem>
+              <ListItem 
+                button 
+                selected={category === 'Placement'} 
+                onClick={() => handleCategoryChange('Placement')}
+                sx={{ borderRadius: 1.5, mb: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><WorkIcon fontSize="small" color="primary" /></ListItemIcon>
+                <ListItemText primary="Placements" />
+              </ListItem>
+              <ListItem 
+                button 
+                selected={category === 'Result'} 
+                onClick={() => handleCategoryChange('Result')}
+                sx={{ borderRadius: 1.5, mb: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><SchoolIcon fontSize="small" color="secondary" /></ListItemIcon>
+                <ListItemText primary="Results" />
+              </ListItem>
+              <ListItem 
+                button 
+                selected={category === 'Event'} 
+                onClick={() => handleCategoryChange('Event')}
+                sx={{ borderRadius: 1.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><EventIcon fontSize="small" sx={{ color: '#fbbf24' }} /></ListItemIcon>
+                <ListItemText primary="Events" />
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid item="true" xs={12} md={8}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+            All Updates
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Page {page} of {totalPages}
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        )}
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : notifications.length === 0 ? (
+          <Paper sx={{ p: 6, textAlign: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: 'divider', bgcolor: 'transparent' }}>
+            <Typography variant="body1" color="text.secondary">
+              No updates match the selected category.
+            </Typography>
+          </Paper>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {notifications.map((notif) => {
+              const isViewed = viewedIds.includes(notif.ID);
+              return (
+                <NotificationCard 
+                  key={notif.ID} 
+                  notif={notif} 
+                  isViewed={isViewed} 
+                  onMarkViewed={onMarkViewed} 
+                />
+              );
+            })}
+
+            {totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Pagination 
+                  count={totalPages} 
+                  page={page} 
+                  onChange={handlePageChange} 
+                  color="primary" 
+                />
+              </Box>
+            )}
+          </Box>
+        )}
+      </Grid>
+    </Grid>
+  );
+}
+
+function NotificationCard({ notif, isViewed, onMarkViewed }) {
+  const getBadgeDetails = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'placement':
+        return {
+          label: 'Placement',
+          color: 'primary',
+          icon: <WorkIcon fontSize="inherit" />
+        };
+      case 'result':
+        return {
+          label: 'Result',
+          color: 'secondary',
+          icon: <SchoolIcon fontSize="inherit" />
+        };
+      case 'event':
+        return {
+          label: 'Event',
+          sx: { bgcolor: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.2)' },
+          icon: <EventIcon fontSize="inherit" />
+        };
+      default:
+        return {
+          label: type || 'Info',
+          color: 'default',
+          icon: <InfoIcon fontSize="inherit" />
+        };
+    }
+  };
+
+  const badge = getBadgeDetails(notif.Type);
+
+  return (
+    <Card sx={{ 
+      transition: 'opacity 0.2s, transform 0.2s',
+      opacity: isViewed ? 0.65 : 1, 
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        borderColor: 'rgba(255, 255, 255, 0.12)'
+      }
+    }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2.5 }}>
+          <Avatar sx={{ 
+            bgcolor: 'background.default', 
+            border: '1px solid', 
+            borderColor: 'divider',
+            width: 40,
+            height: 40,
+            color: badge.color ? `${badge.color}.light` : badge.sx?.color
+          }}>
+            {badge.icon}
+          </Avatar>
+
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 1 }}>
+              <Chip 
+                label={badge.label} 
+                size="small" 
+                color={badge.color} 
+                sx={badge.sx}
+                variant="outlined" 
+              />
+              
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <AccessTimeIcon fontSize="inherit" sx={{ fontSize: 12 }} /> {notif.Timestamp}
+              </Typography>
+
+              {!isViewed && (
+                <Chip
+                  icon={<FiberNewIcon />}
+                  label="New"
+                  size="small"
+                  color="info"
+                  variant="filled"
+                  sx={{ height: 20, '& .MuiChip-icon': { fontSize: 14, ml: 0.5 } }}
+                />
+              )}
+            </Box>
+
+            <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.5, color: 'text.primary' }}>
+              {notif.Message || 'No updates info provided.'}
+            </Typography>
+
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.8, color: 'text.secondary', fontFamily: 'monospace' }}>
+              ID: {notif.ID}
+            </Typography>
+          </Box>
+
+          {!isViewed && (
+            <IconButton 
+              size="small" 
+              color="primary"
+              onClick={() => onMarkViewed(notif.ID)}
+              title="Mark as viewed"
+              sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 0.8 }}
+            >
+              <DoneIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+function App() {
   const [profile, setProfile] = useState({
     name: 'Student',
     rollNo: '234G1A3392',
     email: '234g1a3392@srit.ac.in'
   });
 
-  const [readIds, setReadIds] = useState(() => {
+  const [viewedIds, setViewedIds] = useState(() => {
     try {
-      const saved = localStorage.getItem('srit_read_notifications');
+      const saved = localStorage.getItem('srit_viewed_updates');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -41,309 +542,45 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('srit_read_notifications', JSON.stringify(readIds));
-  }, [readIds]);
+    localStorage.setItem('srit_viewed_updates', JSON.stringify(viewedIds));
+  }, [viewedIds]);
 
-  // Fetch profile details
   useEffect(() => {
     axios.get(`${API_BASE}/profile`)
       .then(res => setProfile(res.data))
-      .catch(err => console.log('Could not fetch student profile', err));
+      .catch(err => console.log('Could not fetch student details', err));
   }, []);
 
-  const loadNotifications = useCallback(async (nLimit, hiddenIds) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${API_BASE}/notifications`, {
-        params: {
-          n: nLimit,
-          readIds: hiddenIds.join(',')
-        }
-      });
-      if (response.data?.success) {
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.error || err.message || 'Server connection failed. Run backend server first.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadNotifications(limit, readIds);
-  }, [limit, readIds, loadNotifications]);
-
-  const handleMarkAsRead = (id) => {
-    setReadIds(prev => [...prev, id]);
-  };
-
-  const handleResetHistory = () => {
-    setReadIds([]);
-  };
-
-  const getCategoryTheme = (type) => {
-    switch (type?.toLowerCase()) {
-      case 'placement':
-        return {
-          badge: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-          icon: <Briefcase className="w-5 h-5 text-violet-400" />
-        };
-      case 'result':
-        return {
-          badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-          icon: <GraduationCap className="w-5 h-5 text-emerald-400" />
-        };
-      case 'event':
-        return {
-          badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-          icon: <Calendar className="w-5 h-5 text-amber-400" />
-        };
-      default:
-        return {
-          badge: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-          icon: <Info className="w-5 h-5 text-slate-400" />
-        };
-    }
+  const handleMarkViewed = (id) => {
+    setViewedIds(prev => [...prev, id]);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
-      {/* Header bar */}
-      <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-600 flex items-center justify-center shadow-md shadow-indigo-500/10">
-              <Bell className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">
-                SRIT Campus Hub
-              </h1>
-              <p className="text-xs text-slate-500">Student Notification Portal</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Gateway
-            </span>
-            <button
-              onClick={() => loadNotifications(limit, readIds)}
-              disabled={loading}
-              className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition border border-slate-800 disabled:opacity-50"
-              title="Refresh feed"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Grid */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Sidebar panel */}
-        <section className="space-y-6 lg:col-span-1">
-          {/* Profile Card */}
-          <div className="bg-gradient-to-b from-slate-900/60 to-slate-900/30 border border-slate-900 rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-5 pointer-events-none">
-              <User className="w-36 h-36" />
-            </div>
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
-              My Profile
-            </h2>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-lg">
-                {profile.name[0]}
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-semibold text-white truncate">{profile.name}</p>
-                <p className="text-xs text-indigo-400 font-mono font-medium">{profile.rollNo}</p>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">{profile.email}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Priorities list */}
-          <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">
-              Feed Categories
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-900/60">
-                <span className="text-sm text-slate-200">Placements</span>
-                <span className="text-[10px] font-bold text-violet-400 bg-violet-400/5 px-2 py-0.5 rounded border border-violet-400/10">Priority: High</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-900/60">
-                <span className="text-sm text-slate-200">Results</span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/5 px-2 py-0.5 rounded border border-emerald-400/10">Priority: Medium</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-900/60">
-                <span className="text-sm text-slate-200">Events</span>
-                <span className="text-[10px] font-bold text-amber-400 bg-amber-400/5 px-2 py-0.5 rounded border border-amber-400/10">Priority: Low</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Control Settings */}
-          <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">
-              Feed Controls
-            </h2>
-            
-            <div className="space-y-5">
-              <div>
-                <label className="text-xs text-slate-500 font-semibold block mb-2">
-                  MAX NOTIFICATIONS TO SHOW: {limit}
-                </label>
-                <input
-                  type="range"
-                  min="3"
-                  max="30"
-                  value={limit}
-                  onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                />
-              </div>
-
-              <div className="pt-4 border-t border-slate-900/80 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-slate-500 font-semibold block">
-                    READ LOGS
-                  </span>
-                  <span className="text-[11px] text-slate-400">{readIds.length} hidden from feed</span>
-                </div>
-                {readIds.length > 0 && (
-                  <button
-                    onClick={handleResetHistory}
-                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition"
-                  >
-                    Reset & Show All
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Feed Column */}
-        <section className="lg:col-span-2 space-y-4">
-          
-          {/* Error banner */}
-          {error && (
-            <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-5 flex gap-4">
-              <AlertTriangle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-semibold text-rose-400">Gateway Error</h3>
-                <p className="text-xs text-slate-400 mt-1 leading-normal">
-                  {error}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Heading */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              My Priority Feed
-            </span>
-          </div>
-
-          {loading ? (
-            /* Skeleton Loading */
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-slate-900/10 border border-slate-900/60 rounded-2xl p-5 animate-pulse flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800/40 shrink-0"></div>
-                  <div className="flex-1 space-y-2 py-1">
-                    <div className="h-3 bg-slate-800/40 rounded w-1/4"></div>
-                    <div className="h-3.5 bg-slate-800/40 rounded w-3/4"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : notifications.length === 0 ? (
-            /* Empty State */
-            <div className="bg-slate-900/10 border border-slate-900 border-dashed rounded-2xl p-12 text-center flex flex-col items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-slate-800 mb-3" />
-              <h3 className="text-sm font-semibold text-slate-400">Feed clean</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-xs leading-normal">
-                {readIds.length > 0 
-                  ? 'All campus updates have been checked. Reset filter history to show them again.'
-                  : 'No notification stream active. Check back later.'
-                }
-              </p>
-              {readIds.length > 0 && (
-                <button
-                  onClick={handleResetHistory}
-                  className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition"
-                >
-                  Reset History
-                </button>
-              )}
-            </div>
-          ) : (
-            /* Notifications list */
-            <div className="space-y-4">
-              {notifications.map((notif) => {
-                const theme = getCategoryTheme(notif.Type);
-                return (
-                  <div 
-                    key={notif.ID}
-                    className="group bg-slate-900/20 hover:bg-slate-900/40 border border-slate-900 hover:border-slate-800 rounded-2xl p-5 flex items-start gap-4 transition duration-200"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-900 shrink-0">
-                      {theme.icon}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center flex-wrap gap-2 mb-1">
-                        <span className={`text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded border ${theme.badge}`}>
-                          {notif.Type}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {notif.Timestamp}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                        {notif.Message}
-                      </p>
-                      <span className="text-[9px] text-slate-600 block mt-1 font-mono select-all truncate">
-                        ID: {notif.ID}
-                      </span>
-                    </div>
-
-                    <div className="shrink-0 self-center opacity-0 group-hover:opacity-100 transition duration-150">
-                      <button
-                        onClick={() => handleMarkAsRead(notif.ID)}
-                        className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-lg border border-slate-800 transition"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 py-6 mt-12 bg-slate-950">
-        <div className="max-w-6xl mx-auto px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <p>© 2026 Sumathi Reddy Institute of Technology. All rights reserved.</p>
-          <div className="flex gap-4">
-            <span className="cursor-default">SRIT Campus Portal</span>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <BrowserRouter>
+      <Layout profile={profile}>
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              <PriorityInboxView 
+                profile={profile} 
+                viewedIds={viewedIds} 
+                onMarkViewed={handleMarkViewed} 
+              />
+            } 
+          />
+          <Route 
+            path="/all" 
+            element={
+              <AllNotificationsView 
+                viewedIds={viewedIds} 
+                onMarkViewed={handleMarkViewed} 
+              />
+            } 
+          />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   );
 }
 

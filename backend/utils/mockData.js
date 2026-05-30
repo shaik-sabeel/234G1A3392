@@ -1,7 +1,3 @@
-/**
- * Mock Campus Notifications
- * Used as a fallback for demonstration purposes when credentials are not yet configured.
- */
 const mockNotifications = [
   {
     ID: "notif-100",

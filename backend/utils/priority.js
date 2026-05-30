@@ -1,11 +1,9 @@
-// Weights for notification types
 const TYPE_WEIGHTS = {
   placement: 3,
   result: 2,
   event: 1
 };
 
-// Helper to parse date to timestamp ms safely
 function getTimestampMs(notification) {
   if (!notification.Timestamp) return 0;
   const isoString = notification.Timestamp.replace(' ', 'T');
@@ -13,7 +11,6 @@ function getTimestampMs(notification) {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-// Custom comparator: negative if a has lower priority than b
 function compareNotifications(a, b) {
   const weightA = TYPE_WEIGHTS[a.Type?.toLowerCase()] || 0;
   const weightB = TYPE_WEIGHTS[b.Type?.toLowerCase()] || 0;
@@ -28,7 +25,6 @@ function compareNotifications(a, b) {
   return timeA - timeB;
 }
 
-// MinHeap for holding top N items efficiently
 class MinHeap {
   constructor(maxSize) {
     this.heap = [];
@@ -54,7 +50,6 @@ class MinHeap {
   }
 
   getSortedList() {
-    // return highest priority first
     return [...this.heap].sort((a, b) => compareNotifications(b, a));
   }
 
@@ -101,7 +96,6 @@ class MinHeap {
   }
 }
 
-// Filter read items and retrieve top N priority notifications
 function getPriorityNotifications(notifications, n = 10, readIds = []) {
   if (!Array.isArray(notifications)) return [];
 

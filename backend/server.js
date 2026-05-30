@@ -17,7 +17,6 @@ const TEST_SERVER_URL = process.env.TEST_SERVER_URL || 'http://4.224.186.213/eva
 app.use(cors());
 app.use(express.json());
 
-// Logger config injection middleware
 async function loggingContextMiddleware(req, res, next) {
   try {
     const token = await getAccessToken();
@@ -38,7 +37,6 @@ async function loggingContextMiddleware(req, res, next) {
 
 app.use(loggingContextMiddleware);
 
-// Get student profile info
 app.get('/api/profile', (req, res) => {
   res.status(200).json({
     name: process.env.FULL_NAME || 'Sabeel',
@@ -47,7 +45,60 @@ app.get('/api/profile', (req, res) => {
   });
 });
 
-// Main notification endpoint
+app.get('/api/notifications/all', async (req, res) => {
+  const { limit, page, notification_type } = req.query;
+  try {
+    await req.Log('backend', 'info', 'route', `GET all page=${page || 1} type=${notification_type || 'all'}`);
+
+    const token = await getAccessToken();
+    let responseData;
+
+    if (token === 'mock-developer-token') {
+      await req.Log('backend', 'info', 'service', 'Mock all updates request');
+      let filtered = [...mockNotifications];
+      if (notification_type) {
+        filtered = filtered.filter(n => n.Type?.toLowerCase() === notification_type.toLowerCase());
+      }
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      const start = (pageNum - 1) * limitNum;
+      const paginated = filtered.slice(start, start + limitNum);
+
+      responseData = {
+        notifications: paginated,
+        total: filtered.length,
+        page: pageNum,
+        limit: limitNum
+      };
+    } else {
+      const params = {};
+      if (limit) params.limit = limit;
+      if (page) params.page = page;
+      if (notification_type) params.notification_type = notification_type;
+
+      const response = await axios.get(`${TEST_SERVER_URL}/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        params,
+        timeout: 10000
+      });
+      responseData = response.data;
+    }
+
+    res.status(200).json({
+      success: true,
+      ...responseData
+    });
+  } catch (error) {
+    const errMsg = error.response?.data?.message || error.message;
+    await req.Log('backend', 'error', 'handler', `Fetch all error: ${errMsg}`);
+    res.status(error.response?.status || 500).json({
+      success: false,
+      message: 'Failed to retrieve notifications',
+      error: errMsg
+    });
+  }
+});
+
 app.get('/api/notifications', async (req, res) => {
   const n = parseInt(req.query.n, 10) || 10;
   const readIdsQuery = req.query.readIds || '';
@@ -72,7 +123,6 @@ app.get('/api/notifications', async (req, res) => {
       notifications = response.data?.notifications || [];
     }
 
-    // Sort using priority rules
     const priorityList = getPriorityNotifications(notifications, n, readIds);
     await req.Log('backend', 'info', 'controller', `Returned ${priorityList.length} items`);
 
@@ -93,7 +143,6 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
-// Logging proxy endpoint
 app.post('/api/logs', async (req, res) => {
   const { stack, level, package: pkg, message } = req.body;
   try {

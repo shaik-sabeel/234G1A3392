@@ -34,7 +34,6 @@ const SHARED_PACKAGES = [
 let apiBaseUrl = 'http://4.224.186.213/evaluation-service';
 let authToken = '';
 
-// Configure token and baseURL for the logger instance
 function configure(config = {}) {
   if (config.token) {
     authToken = config.token;
@@ -44,13 +43,11 @@ function configure(config = {}) {
   }
 }
 
-// Reusable Log function executing POST requests to the test server
 async function Log(stack, level, pkg, message) {
   const lowerStack = String(stack).toLowerCase();
   const lowerLevel = String(level).toLowerCase();
   const lowerPkg = String(pkg).toLowerCase();
 
-  // Basic validation checks
   if (!STACKS.includes(lowerStack)) {
     throw new Error(`Invalid stack: "${stack}". Allowed: ${STACKS.join(', ')}`);
   }
@@ -74,7 +71,6 @@ async function Log(stack, level, pkg, message) {
     throw new Error('Log message must be a non-empty string');
   }
 
-  // Max length on test server is 48 chars. Autocut with suspension dots.
   let safeMessage = String(message);
   if (safeMessage.length > 48) {
     safeMessage = safeMessage.substring(0, 45) + '...';

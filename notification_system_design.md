@@ -83,4 +83,4 @@ graph TD
 ### Components
 1. **`logging_middleware`**: A reusable, standalone package developed in JavaScript. It enforces strict parameter constraints (verifying `stack`, `level`, and `package` values) and uploads logs to the Test Server.
 2. **`backend`**: An Express server. It handles authentication (caching JWTs to reduce roundtrips), proxies request fetching, sorts notifications using the Min-Heap algorithm, and uses the logging package to log route lifecycles.
-3. **`frontend`**: A React application built with Tailwind CSS and Vite. It provides a real-time dark-mode dashboard allowing students to filter feed sizes ($n$), reset read states, and instantly mark notifications as read.
+3. **`frontend`**: A React application built with Material UI and Vite. It provides a real-time dark-mode dashboard allowing students to filter feed sizes ($n$), reset read states, and instantly mark notifications as read.

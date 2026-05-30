@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load environment variables
 dotenv.config();
 
 const {
@@ -19,7 +18,6 @@ const {
 async function runRegistration() {
   console.log('Starting registration with the Affordmed Test Server...');
 
-  // Validate that user has modified placeholder values
   if (!EMAIL || EMAIL.includes('your-university-email') || EMAIL.includes('example.edu')) {
     console.error('ERROR: Please set a valid EMAIL in your .env file before registering.');
     process.exit(1);
@@ -60,18 +58,15 @@ async function runRegistration() {
       return;
     }
 
-    // Read the current .env file and replace/update the client credentials
     const envPath = path.join(__dirname, '.env');
     let envContent = fs.readFileSync(envPath, 'utf8');
 
-    // Update CLIENT_ID
     if (envContent.includes('CLIENT_ID=')) {
       envContent = envContent.replace(/CLIENT_ID=.*/, `CLIENT_ID=${clientID}`);
     } else {
       envContent += `\nCLIENT_ID=${clientID}`;
     }
 
-    // Update CLIENT_SECRET
     if (envContent.includes('CLIENT_SECRET=')) {
       envContent = envContent.replace(/CLIENT_SECRET=.*/, `CLIENT_SECRET=${clientSecret}`);
     } else {
